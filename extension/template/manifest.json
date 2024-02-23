@@ -1,0 +1,22 @@
+{
+    "manifest_version": 3,
+    "name": "ENS Everywhere",
+    "version": "0.1",
+    "description": "Add ENS support to all websites",
+    "icons": {
+        "128": "images/icon-128.png"
+    },
+    "content_scripts": [
+        {
+            "js": ["scripts/content.js"],
+            "matches": [
+                "https://developer.chrome.com/docs/extensions/*",
+                "https://developer.chrome.com/docs/webstore/*",
+                "https://etherscan.io/*",
+                "https://goerli.etherscan.io/*",
+                "https://optimistic.etherscan.io/*",
+                "https://polygonscan.com/*"
+            ]
+        }
+    ]
+}

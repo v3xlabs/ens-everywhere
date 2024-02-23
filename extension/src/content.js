@@ -1,96 +1,7 @@
 console.log("ENS Everywhere LOADED");
 
-let searchMatches = [
-    "input#search-panel",
-    "input#txtSearchAddressOrDomainName",
-    "input#txtSearchInput"
-];
-
-let search = searchMatches.reduce((acc, selector) => {
-    let elements = document.querySelectorAll(selector);
-    if (elements.length) {
-        acc.push(elements);
-    }
-    return acc;
-}, []);
-
-if (search.length > 0) {
-    console.log("ENS Everywhere: search panel found");
-
-    // Add a style tag to the page
-    const style = document.createElement("style");
-
-    style.textContent = `
-      #search-panel {
-        background: hotpink !important;
-      }
-      #txtSearchAddressOrDomainName {
-        background: hotpink !important;
-      }
-    `;
-
-    document.head.appendChild(style);
-}
-
-// Regex that matches any domain name in the format of `luc.eth` `hello.com` `world.luc.xyz` etc.
-const name_regex = /([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+/;
-
-// Ethereum Regex
-const ethereum_address_regex = /^0x[a-fA-F0-9]{40}$/;
-
-search.forEach((search_elements) => {
-    console.log(search_elements);
-    search_elements.forEach((search_element) => {
-        search_element.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-
-                console.log("SUBMITTED " + event.target.value);
-
-                const name = event.target.value;
-
-                if (name.match(name_regex)) {
-                    console.log("ENS Everywhere: name matches regex");
-                }
-
-                (async () => {
-                    // Fetch `https://enstate.rs/n/<name>`
-                    const result = await fetch(`https://enstate.rs/n/${name}`);
-
-                    if (result.status !== 200) {
-                        console.log("ENS Everywhere: name not found");
-                    }
-
-                    const data = await result.json();
-
-                    console.log(data);
-
-                    const address = data["address"];
-
-                    if (!address) {
-                        return;
-                    }
-
-                    console.log("ENS Everywhere: address found", address);
-
-                    // Redirect to `https://<domain>/address/<address>`
-                    const domain = window.location.hostname;
-
-                    window.location.href = `https://${domain}/address/${address}`;
-                })();
-                return;
-            }
-
-            console.log(
-                "ENS Everywhere: search input changed",
-                event.target.value,
-            );
-            console.log(event);
-        });
-    });
-});
-
-// Translate Addresses to ENS Names
+import './content/search.js';
+import {getName} from './content/resolve.js';
 
 /**
  * Etherscan Address Translation
@@ -115,6 +26,10 @@ search.forEach((search_elements) => {
  *   span.hash-tag.text-truncate
  *   where the text matches an address such as 0x225f137127d9067788314bc7fcc1f36746a3c3B5 (ethereum address regex)
  *   We can then extract the address from the text, and translate it to an ENS name
+ *
+ * Strategy 5:
+ *   span.hash-tag.text-truncase > span[data-highlight-target]
+ *   where the [data-highlight-target] matches an address such as 0x225f137127d9067788314bc7fcc1f36746a3c3B5 (ethereum address regex)
  */
 function translateEtherscanAddresses2ENS() {
     // Get all the address elements
@@ -127,9 +42,7 @@ function translateEtherscanAddresses2ENS() {
         // Get the address
         const address = addressElement.getAttribute("data-clipboard-text");
 
-        // Fetch `https://enstate.rs/a/<address>`
-        fetch(`https://enstate.rs/a/${address}`)
-            .then((response) => response.json())
+        getName(address)
             .then((data) => {
                 // Get the ENS name
                 const name = data["name"];
@@ -164,8 +77,7 @@ function translateEtherscanAddresses2ENS() {
         const address = href.split("/")[2];
 
         // Fetch `https://enstate.rs/a/<address>`
-        fetch(`https://enstate.rs/a/${address}`)
-            .then((response) => response.json())
+        getName(address)
             .then((data) => {
                 // Get the ENS name
                 const name = data["name"];
@@ -198,8 +110,7 @@ function translateEtherscanAddresses2ENS() {
         const address = dataBsTitle;
 
         // Fetch `https://enstate.rs/a/<address>`
-        fetch(`https://enstate.rs/a/${address}`)
-            .then((response) => response.json())
+        getName(address)
             .then((data) => {
                 // Get the ENS name
                 const name = data["name"];
@@ -217,28 +128,72 @@ function translateEtherscanAddresses2ENS() {
             });
     });
 
-    // Strategy 4
+    // // Strategy 4
+    // // Get all the address elements
+    // const addressElements4 = document.querySelectorAll(
+    //     ".hash-tag.text-truncate",
+    // );
+
+    // console.log({ addressElements4 });
+
+    // // Loop through them
+    // addressElements4.forEach((addressElement) => {
+    //     // Get the text
+    //     const text = addressElement.textContent;
+
+    //     // If the text is not an ethereum address, return
+    //     if (!text.match(ethereum_address_regex)) {
+    //         return;
+    //     }
+
+    //     // Get the address from the text
+    //     const address = text;
+
+    //     // Fetch `https://enstate.rs/a/<address>`
+    //     fetch(`https://enstate.rs/a/${address}`)
+    //         .then((response) => response.json())
+    //         .then((data) => {
+    //             // Get the ENS name
+    //             const name = data["name"];
+
+    //             // If there is no ENS name, return
+    //             if (!name) {
+    //                 return;
+    //             }
+
+    //             // Replace the address with the ENS name
+    //             addressElement.textContent = name;
+    //         })
+    //         .catch((error) => {
+    //             console.log(error);
+    //         });
+    // });
+
+    // Strategy 5
     // Get all the address elements
-    const addressElements4 = document.querySelectorAll(
-        ".hash-tag.text-truncate",
+    const addressElements5 = document.querySelectorAll(
+        ".hash-tag.text-truncate > span[data-highlight-target]",
     );
 
-    // Loop through them
-    addressElements4.forEach((addressElement) => {
-        // Get the text
-        const text = addressElement.textContent;
+    console.log({ addressElements5 });
 
-        // If the text is not an ethereum address, return
-        if (!text.match(ethereum_address_regex)) {
+    // Loop through them
+    addressElements5.forEach((addressElement) => {
+        // Get the data-highlight-target
+        const dataHighlightTarget = addressElement.getAttribute(
+            "data-highlight-target",
+        );
+
+        // If the data-highlight-target is not an ethereum address, return
+        if (!dataHighlightTarget.match(ethereum_address_regex)) {
             return;
         }
 
-        // Get the address from the text
-        const address = text;
+        // Get the address from the data-highlight-target
+        const address = dataHighlightTarget;
 
         // Fetch `https://enstate.rs/a/<address>`
-        fetch(`https://enstate.rs/a/${address}`)
-            .then((response) => response.json())
+        getName(address)
             .then((data) => {
                 // Get the ENS name
                 const name = data["name"];
