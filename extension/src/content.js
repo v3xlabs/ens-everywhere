@@ -3,6 +3,12 @@ console.log("ENS Everywhere LOADED");
 import './content/search.js';
 import {getName} from './content/resolve.js';
 
+// Regex that matches any domain name in the format of `luc.eth` `hello.com` `world.luc.xyz` etc.
+const name_regex = /([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+/;
+
+// Ethereum Regex
+const ethereum_address_regex = /^0x[a-fA-F0-9]{40}$/;
+
 /**
  * Etherscan Address Translation
  * On etherscan addresses are displayed as `0x123...456`
