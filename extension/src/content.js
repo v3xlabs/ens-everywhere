@@ -192,18 +192,20 @@ function translateEtherscanAddresses2ENS() {
 
         // If the data-highlight-target is not an ethereum address, return
         if (!dataHighlightTarget.match(ethereum_address_regex)) {
+            console.log("Not updating because not ethereum address", dataHighlightTarget);
             return;
         }
 
         // Get the address from the data-highlight-target
         const address = dataHighlightTarget;
         const truncatedAddress = address.slice(0, 8) + "..." + address.slice(-8);
+        const truncatedAddress2 = address.slice(0, 8) + "..." + address.slice(-9);
         const bodyText = addressElement.innerText;
 
-        if ([address.toLowerCase(), truncatedAddress.toLowerCase()].includes(bodyText.toLowerCase()) === false) {
-            console.log("Not updating because body mismatch");
-            return;
-        }
+        // if ([address.toLowerCase(), truncatedAddress.toLowerCase(), truncatedAddress2.toLowerCase()].includes(bodyText.toLowerCase()) === false) {
+        //     console.log("Not updating because body mismatch");
+        //     return;
+        // }
 
         // Fetch `https://enstate.rs/a/<address>`
         getName(address)
