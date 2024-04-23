@@ -234,6 +234,7 @@ function translateEtherscanAddresses2ENS() {
                 // Replace the address with the ENS name
                 addresses2[address].forEach((addressElement) => {
                     addressElement.textContent = name;
+                    addressElement.classList.add("ens-everywhere-label");
                 });
             })
             .catch((error) => {

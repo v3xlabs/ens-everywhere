@@ -9,6 +9,7 @@
     "content_scripts": [
         {
             "js": ["scripts/content.js"],
+            "css": ["styles/content.css"],
             "matches": [
                 "https://developer.chrome.com/docs/extensions/*",
                 "https://developer.chrome.com/docs/webstore/*",
