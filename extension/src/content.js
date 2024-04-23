@@ -181,10 +181,12 @@ function translateEtherscanAddresses2ENS() {
         "span[data-highlight-target], a[data-highlight-target]",
     );
 
-    console.log({ addressElements5 });
+    const elements = [];
+    for (let element of addressElements5) {
+        elements.push(element);
+    }
 
-    // Loop through them
-    addressElements5.forEach((addressElement) => {
+    const addresses = elements.map((addressElement) => {
         // Get the data-highlight-target
         const dataHighlightTarget = addressElement.getAttribute(
             "data-highlight-target",
@@ -207,7 +209,18 @@ function translateEtherscanAddresses2ENS() {
         //     return;
         // }
 
-        // Fetch `https://enstate.rs/a/<address>`
+        return address;
+    });
+
+    const addresses2 = {};
+
+    for (let i = 0; i < addresses.length; i++) {
+        const a = addresses2[addresses[i]] || [];
+        a.push(addressElements5[i]);
+        addresses2[addresses[i]] = a;
+    }
+
+    for (let address in addresses2) {
         getName(address)
             .then((data) => {
                 // Get the ENS name
@@ -219,12 +232,39 @@ function translateEtherscanAddresses2ENS() {
                 }
 
                 // Replace the address with the ENS name
-                addressElement.textContent = name;
+                addresses2[address].forEach((addressElement) => {
+                    addressElement.textContent = name;
+                });
             })
             .catch((error) => {
                 console.log(error);
             });
-    });
+    }
+
+
+    // if ([address.toLowerCase(), truncatedAddress.toLowerCase(), truncatedAddress2.toLowerCase()].includes(bodyText.toLowerCase()) === false) {
+    //     console.log("Not updating because body mismatch");
+    //     return;
+    // }
+
+    // // Fetch `https://enstate.rs/a/<address>`
+    // getName(address)
+    //     .then((data) => {
+    //         // Get the ENS name
+    //         const name = data["name"];
+
+    //         // If there is no ENS name, return
+    //         if (!name) {
+    //             return;
+    //         }
+
+    //         // Replace the address with the ENS name
+    //         addressElement.textContent = name;
+    //     })
+    //     .catch((error) => {
+    //         console.log(error);
+    //     });
+    // });
 }
 
 translateEtherscanAddresses2ENS();
