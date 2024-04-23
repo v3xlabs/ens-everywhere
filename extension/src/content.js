@@ -1,7 +1,8 @@
 console.log("ENS Everywhere LOADED");
 
 import "./content/search.js";
-import { getName } from "./content/resolve.js";
+import { fetchBatchViaSSE, getName } from "./content/resolve.js";
+import { getCache, setCache } from "./content/cache.js";
 
 // Regex that matches any domain name in the format of `luc.eth` `hello.com` `world.luc.xyz` etc.
 const name_regex = /([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+/;
@@ -37,7 +38,7 @@ const ethereum_address_regex = /^0x[a-fA-F0-9]{40}$/;
  *   span.hash-tag.text-truncase > span[data-highlight-target]
  *   where the [data-highlight-target] matches an address such as 0x225f137127d9067788314bc7fcc1f36746a3c3B5 (ethereum address regex)
  */
-function translateEtherscanAddresses2ENS() {
+async function translateEtherscanAddresses2ENS() {
     // // Get all the address elements
     // const addressElements = document.querySelectorAll(
     //     "td > div > span.hash-tag.text-truncate + a[data-clipboard-text]",
@@ -194,14 +195,19 @@ function translateEtherscanAddresses2ENS() {
 
         // If the data-highlight-target is not an ethereum address, return
         if (!dataHighlightTarget.match(ethereum_address_regex)) {
-            console.log("Not updating because not ethereum address", dataHighlightTarget);
+            console.log(
+                "Not updating because not ethereum address",
+                dataHighlightTarget,
+            );
             return;
         }
 
         // Get the address from the data-highlight-target
         const address = dataHighlightTarget;
-        const truncatedAddress = address.slice(0, 8) + "..." + address.slice(-8);
-        const truncatedAddress2 = address.slice(0, 8) + "..." + address.slice(-9);
+        const truncatedAddress =
+            address.slice(0, 8) + "..." + address.slice(-8);
+        const truncatedAddress2 =
+            address.slice(0, 8) + "..." + address.slice(-9);
         const bodyText = addressElement.innerText;
 
         // if ([address.toLowerCase(), truncatedAddress.toLowerCase(), truncatedAddress2.toLowerCase()].includes(bodyText.toLowerCase()) === false) {
@@ -215,33 +221,76 @@ function translateEtherscanAddresses2ENS() {
     const addresses2 = {};
 
     for (let i = 0; i < addresses.length; i++) {
-        const a = addresses2[addresses[i]] || [];
+        const val = addresses[i].toLowerCase();
+        const a = addresses2[val] || [];
         a.push(addressElements5[i]);
-        addresses2[addresses[i]] = a;
+        addresses2[val] = a;
+    }
+
+    const justAddresses = Object.keys(addresses2);
+
+    function updateNodesForAddress(address, name) {
+        const dat = addresses2[address];
+
+        console.log({dat});
+
+        for (let node of dat) {
+            node.innerHTML = name;
+            node.classList.add("ens-everywhere-label");
+        }
     }
 
     for (let address in addresses2) {
-        getName(address)
-            .then((data) => {
-                // Get the ENS name
-                const name = data["name"];
-
-                // If there is no ENS name, return
-                if (!name) {
-                    return;
-                }
-
-                // Replace the address with the ENS name
-                addresses2[address].forEach((addressElement) => {
-                    addressElement.textContent = name;
-                    addressElement.classList.add("ens-everywhere-label");
-                });
-            })
-            .catch((error) => {
-                console.log(error);
-            });
+        const name = getCache(address);
+        if (name) {
+            justAddresses.splice(justAddresses.indexOf(address), 1);
+            updateNodesForAddress(address, name);
+        }
     }
 
+    let chunks = [];
+    let chunkSize = 10;
+    for (let i = 0; i < justAddresses.length; i += chunkSize) {
+        chunks.push(justAddresses.slice(i, i + chunkSize));
+    }
+
+    for (let chunk of chunks) {
+        await fetchBatchViaSSE(chunk, (data2) => {
+            const data = JSON.parse(data2);
+            const name = data["response"]?.["name"];
+            console.log({data, name});
+
+            if (!name) return;
+
+            const query = data["query"].toLowerCase();
+
+            setCache(query, name);
+
+            updateNodesForAddress(query, name);
+        });
+    }
+
+    // for (let address in addresses2) {
+    //     getName(address)
+    //         .then((data) => {
+    //             // Get the ENS name
+    //             const name = data["name"];
+
+    //             // If there is no ENS name, return
+    //             if (!name) {
+    //                 return;
+    //             }
+
+    //             // Replace the address with the ENS name
+    //             addresses2[address].forEach((addressElement) => {
+    //                 addressElement.textContent = name;
+    //                 addressElement.classList.add("ens-everywhere-label");
+    //             });
+    //         })
+    //         .catch((error) => {
+    //             console.log(error);
+    //         });
+    // }
 
     // if ([address.toLowerCase(), truncatedAddress.toLowerCase(), truncatedAddress2.toLowerCase()].includes(bodyText.toLowerCase()) === false) {
     //     console.log("Not updating because body mismatch");
