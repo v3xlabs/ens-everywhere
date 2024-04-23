@@ -19,6 +19,7 @@
                 "https://etherscan.io/*",
                 "https://goerli.etherscan.io/*",
                 "https://optimistic.etherscan.io/*",
+                "https://basescan.org/*",
                 "https://polygonscan.com/*"
             ]
         }

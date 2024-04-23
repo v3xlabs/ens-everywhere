@@ -227,6 +227,23 @@ async function translateEtherscanAddresses2ENS() {
         addresses2[val] = a;
     }
 
+    // Strategy 6
+    const addressElements6 = document.querySelectorAll(
+        "[data-original-title]",
+    );
+
+    for (let addressElement of addressElements6) {
+        const val = addressElement.getAttribute("data-original-title");
+        console.log(val);
+        const ethereum_address_regex = /^0x[a-fA-F0-9]{40}$/;
+        if (!ethereum_address_regex.test(val)) {
+            continue;
+        }   
+
+        addresses2[val] = addresses2[val] || [];
+        addresses2[val].push(addressElement);
+    }
+
     const justAddresses = Object.keys(addresses2);
 
     function updateNodesForAddress(address, data) {
@@ -247,7 +264,7 @@ async function translateEtherscanAddresses2ENS() {
 
     for (let address in addresses2) {
         const data = getCache(address.toLowerCase());
-        if (data['name']) {
+        if (data?.['name']) {
             console.log('cache hit');
             justAddresses.splice(justAddresses.indexOf(address), 1);
             updateNodesForAddress(address, data);

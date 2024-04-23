@@ -25,6 +25,9 @@ if (search.length > 0) {
       #txtSearchAddressOrDomainName {
         background: hotpink !important;
       }
+      #txtSearchInput {
+        background: hotpink !important;
+      }
     `;
 
     document.head.appendChild(style);
