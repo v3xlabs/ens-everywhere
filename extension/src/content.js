@@ -229,22 +229,28 @@ async function translateEtherscanAddresses2ENS() {
 
     const justAddresses = Object.keys(addresses2);
 
-    function updateNodesForAddress(address, name) {
+    function updateNodesForAddress(address, data) {
         const dat = addresses2[address];
 
         console.log({dat});
 
         for (let node of dat) {
-            node.innerHTML = name;
+            node.innerHTML = [
+                '<span>',
+                data['avatar'] && `<img src="${data['avatar']}" />`,
+                data['name'],
+                '</span>'
+            ].filter(Boolean).join('');
             node.classList.add("ens-everywhere-label");
         }
     }
 
     for (let address in addresses2) {
-        const name = getCache(address);
-        if (name) {
+        const data = getCache(address.toLowerCase());
+        if (data['name']) {
+            console.log('cache hit');
             justAddresses.splice(justAddresses.indexOf(address), 1);
-            updateNodesForAddress(address, name);
+            updateNodesForAddress(address, data);
         }
     }
 
@@ -264,9 +270,9 @@ async function translateEtherscanAddresses2ENS() {
 
             const query = data["query"].toLowerCase();
 
-            setCache(query, name);
+            setCache(query, data["response"]);
 
-            updateNodesForAddress(query, name);
+            updateNodesForAddress(query, data["response"]);
         });
     }
 
